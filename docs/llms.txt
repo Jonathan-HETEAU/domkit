@@ -1,0 +1,61 @@
+# DomKit
+
+> DomKit is a strictly typed UI framework for Haxe based on components and CSS: components are declared with an XML-like markup (`static var SRC = <comp>...</comp>`) compiled by macros, and styled with CSS properties checked at compile time. It is used by Heaps (`h2d.domkit`): see https://heaps.io/documentation/domkit.html.
+
+Each link points to a Markdown page with the full public API of a type: signatures, documentation, inheritance and platform availability. File dependency map: [deps/DEPENDENCIES.md](deps/DEPENDENCIES.md).
+
+## domkit
+
+- [domkit.Argument](api/md/domkit/Argument.md): A node argument (`<node(arg1, arg2)>`), passed to the component constructor.
+- [domkit.AttributeValue](api/md/domkit/AttributeValue.md): The value of an attribute or argument.
+- [domkit.BezierCurve](api/md/domkit/BezierCurve.md): A cubic bezier easing curve, like CSS `cubic-bezier(c1x, c1y, c2x, c2y)`.
+- [domkit.BytesCell](api/md/domkit/BytesCell.md): An entry of a `BytesMap`.
+- [domkit.BytesMap](api/md/domkit/BytesMap.md): A map with bytes keys, used by the style cache on HashLink.
+- [domkit.Checker](api/md/domkit/Checker.md): Type checks the markup and the CSS of components at runtime (for the interpreted components of `Interp`, or in editors such as Hide), from the types of the Heaps components (`h2d.domkit.InitComponents.build()` classes).
+- [domkit.CodeExpr](api/md/domkit/CodeExpr.md): Haxe code in the markup: an expression in macros, the source code otherwise.
+- [domkit.Component](api/md/domkit/Component.md): A component: the name used in the markup and in CSS (`button`, `flow`...), how to create its objects of type `T`, and how it handles the CSS properties.
+- [domkit.ComponentDecl](api/md/domkit/ComponentDecl.md): Declares the component of another class `T`: a class implementing `ComponentDecl<T>` (with `domkit.Object`) defines the properties of `T`, for classes that can't be modified.
+- [domkit.CssClass](api/md/domkit/CssClass.md): A CSS selector part: component, class names, id and pseudo classes, with its parent selector.
+- [domkit.CssData](api/md/domkit/CssData.md): The rules of a `CssStyle`, sorted by priority, and the cache of the rules matching a set of components.
+- [domkit.CssOp](api/md/domkit/CssOp.md): An arithmetic operator in a CSS value.
+- [domkit.CssParser](api/md/domkit/CssParser.md): Parses CSS style sheets and values, with the DomKit extensions: nested rules (`&`, `>`), variables (`@name : value;`), mixins (`.name(args) { }` used as `.name(values);`), arithmetic, and `//` comments.
+- [domkit.CssRelation](api/md/domkit/CssRelation.md): The relation between a selector and its parent selector.
+- [domkit.CssRule](api/md/domkit/CssRule.md): A property set by a CSS rule, with its position in the source.
+- [domkit.CssSheet](api/md/domkit/CssSheet.md): A parsed style sheet.
+- [domkit.CssSheetElement](api/md/domkit/CssSheetElement.md): A CSS rule: its selectors, properties, transitions and nested rules.
+- [domkit.CssStyle](api/md/domkit/CssStyle.md): A style: CSS rules applied to objects with `Properties.applyStyle`, and the running transitions, updated with `updateTime`.
+- [domkit.CssTransition](api/md/domkit/CssTransition.md): A running transition of a property of an object.
+- [domkit.CssValue](api/md/domkit/CssValue.md): A parsed CSS value.
+- [domkit.Curve](api/md/domkit/Curve.md): An easing curve: linear.
+- [domkit.DMLChecker](api/md/domkit/DMLChecker.md): Parses and type checks the markup of a component (DML), and checks CSS rules against the components.
+- [domkit.Error](api/md/domkit/Error.md): An error while parsing markup or CSS, with its position in the source.
+- [domkit.FastBytes](api/md/domkit/FastBytes.md): Bytes used for the component bit sets of the style cache: `hl.Bytes` on HashLink, `haxe.io.Bytes` elsewhere.
+- [domkit.HSL](api/md/domkit/HSL.md): A color in the HSL color space, used by the `darken`, `lighten`, `saturate` and `desaturate` color functions.
+- [domkit.Identifier](api/md/domkit/Identifier.md): A string (class name or id) converted to a unique integer, for fast comparisons.
+- [domkit.Interp](api/md/domkit/Interp.md): Runs the markup of components with hscript instead of compiled code, to reload it while the program runs (hot reload).
+- [domkit.InvalidProperty](api/md/domkit/InvalidProperty.md): Thrown by a property parser when the CSS value is invalid.
+- [domkit.MToken](api/md/domkit/MToken.md): The states of the markup parser.
+- [domkit.Macros](api/md/domkit/Macros.md): The macros of DomKit: build the `domkit.Object` classes (`buildObject`), and the configuration functions to call from an initialization macro (`--macro`).
+- [domkit.Markup](api/md/domkit/Markup.md): A node of the markup tree.
+- [domkit.MarkupKind](api/md/domkit/MarkupKind.md): The kind of a markup node.
+- [domkit.MarkupParser](api/md/domkit/MarkupParser.md): Parses the XML-like markup of the components (`static var SRC = <comp>...</comp>`).
+- [domkit.MetaComponent](api/md/domkit/MetaComponent.md): The component of a `domkit.Object` class at compile time: reads its `@:p` properties and constructor, and generates its runtime `Component`.
+- [domkit.MetaError](api/md/domkit/MetaError.md): An error of the component macros.
+- [domkit.Model](api/md/domkit/Model.md): The base type of the objects of the UI, `T` being the base class of the components: implement it on your base class (with Heaps, `h2d.Object` is used).
+- [domkit.Object](api/md/domkit/Object.md): A class whose instances are built by DomKit: its `@:p` fields become CSS properties of its component, and its `static var SRC = <comp>...</comp>` markup is compiled into an `initComponent()` method creating the childr...
+- [domkit.ParserMode](api/md/domkit/ParserMode.md): How the value of a `@:p` property is parsed.
+- [domkit.PropParser](api/md/domkit/PropParser.md): How a property value is parsed, for the type checking of CSS values.
+- [domkit.Properties](api/md/domkit/Properties.md): The DomKit state of an object (its `dom` field): component, id, classes, pseudo class states (`hover`, `active`...) and the CSS values set on it.
+- [domkit.Property](api/md/domkit/Property.md): A CSS property name, registered once with a unique id (see `get`).
+- [domkit.PropertyHandler](api/md/domkit/PropertyHandler.md): How a component handles a CSS property: parses its value, applies it to the objects of type `O`, and interpolates it for the transitions.
+- [domkit.PseudoClass](api/md/domkit/PseudoClass.md): The pseudo classes of a CSS selector, as bit flags.
+- [domkit.Rule](api/md/domkit/Rule.md): A CSS rule for one selector, with its priority.
+- [domkit.RuleStyle](api/md/domkit/RuleStyle.md): A property set by a `Rule`.
+- [domkit.RuleTransition](api/md/domkit/RuleTransition.md): A transition set by a `Rule`.
+- [domkit.ScriptInterp](api/md/domkit/ScriptInterp.md): The hscript interpreter running the code of an interpreted component.
+- [domkit.SetAttributeResult](api/md/domkit/SetAttributeResult.md): The result of `Properties.setAttribute`.
+- [domkit.Token](api/md/domkit/Token.md): A token of the CSS lexer.
+- [domkit.Transition](api/md/domkit/Transition.md): A transition of a property, declared with the `transition` CSS property.
+- [domkit.TypedComponent](api/md/domkit/TypedComponent.md): A component, with the types of its class, properties and constructor arguments.
+- [domkit.TypedProperty](api/md/domkit/TypedProperty.md): A property of a component, with its type.
+- [domkit.ValueParser](api/md/domkit/ValueParser.md): Converts CSS values to property values: the `parseXxx` methods are used by the `@:p(xxx)` fields (`@:p(color)` uses `parseColor`).

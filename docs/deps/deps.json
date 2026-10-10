@@ -1,0 +1,555 @@
+{
+ "modules": {
+  "domkit.Checker": {
+   "file": "domkit/Checker.hx",
+   "package": "domkit",
+   "lines": 754,
+   "doc_blocks": 36,
+   "types": [
+    "enum PropParser",
+    "typedef TypedProperty",
+    "typedef TypedComponent",
+    "class Checker",
+    "class DMLChecker"
+   ],
+   "heritage": [
+    [
+     "Checker",
+     "extends",
+     "hscript.Checker"
+    ]
+   ],
+   "deps": {
+    "domkit.Component": [
+     "use"
+    ],
+    "domkit.CssParser": [
+     "use"
+    ],
+    "domkit.CssValue": [
+     "use"
+    ],
+    "domkit.Error": [
+     "use"
+    ],
+    "domkit.MarkupParser": [
+     "import",
+     "use"
+    ],
+    "domkit.Property": [
+     "use"
+    ]
+   },
+   "used_by": [
+    "domkit.Interp"
+   ]
+  },
+  "domkit.Component": {
+   "file": "domkit/Component.hx",
+   "package": "domkit",
+   "lines": 190,
+   "doc_blocks": 18,
+   "types": [
+    "class PropertyHandler",
+    "interface ComponentDecl",
+    "class Component"
+   ],
+   "heritage": [],
+   "deps": {
+    "domkit.CssValue": [
+     "use"
+    ],
+    "domkit.Error": [
+     "use"
+    ],
+    "domkit.Macros": [
+     "use"
+    ],
+    "domkit.MarkupParser": [
+     "use"
+    ],
+    "domkit.Properties": [
+     "use"
+    ],
+    "domkit.Property": [
+     "import",
+     "use"
+    ]
+   },
+   "used_by": [
+    "domkit.Checker",
+    "domkit.CssParser",
+    "domkit.CssStyle",
+    "domkit.Interp",
+    "domkit.Macros",
+    "domkit.MetaComponent",
+    "domkit.Properties"
+   ]
+  },
+  "domkit.CssParser": {
+   "file": "domkit/CssParser.hx",
+   "package": "domkit",
+   "lines": 1753,
+   "doc_blocks": 104,
+   "types": [
+    "enum Token",
+    "enum_abstract PseudoClass",
+    "enum_abstract CssRelation",
+    "class CssClass",
+    "typedef Transition",
+    "typedef CssSheet",
+    "typedef CssRule",
+    "typedef CssSheetElement",
+    "class Curve",
+    "class BezierCurve",
+    "class CssParser"
+   ],
+   "heritage": [
+    [
+     "BezierCurve",
+     "extends",
+     "Curve"
+    ]
+   ],
+   "deps": {
+    "domkit.Component": [
+     "use"
+    ],
+    "domkit.CssValue": [
+     "import",
+     "use"
+    ],
+    "domkit.Error": [
+     "use"
+    ],
+    "domkit.Identifier": [
+     "use"
+    ],
+    "domkit.Macros": [
+     "use"
+    ],
+    "domkit.Property": [
+     "use"
+    ]
+   },
+   "used_by": [
+    "domkit.Checker",
+    "domkit.CssStyle",
+    "domkit.CssValue",
+    "domkit.Interp",
+    "domkit.Macros",
+    "domkit.MetaComponent",
+    "domkit.Properties"
+   ]
+  },
+  "domkit.CssStyle": {
+   "file": "domkit/CssStyle.hx",
+   "package": "domkit",
+   "lines": 915,
+   "doc_blocks": 66,
+   "types": [
+    "class RuleStyle",
+    "class RuleTransition",
+    "class Rule",
+    "class CssTransition",
+    "abstract FastBytes",
+    "class BytesCell",
+    "abstract BytesMap",
+    "typedef FastBytes",
+    "class CssData",
+    "class CssStyle"
+   ],
+   "heritage": [],
+   "deps": {
+    "domkit.Component": [
+     "use"
+    ],
+    "domkit.CssParser": [
+     "use"
+    ],
+    "domkit.CssValue": [
+     "use"
+    ],
+    "domkit.Identifier": [
+     "use"
+    ],
+    "domkit.Model": [
+     "use"
+    ],
+    "domkit.Properties": [
+     "use"
+    ],
+    "domkit.Property": [
+     "use"
+    ]
+   },
+   "used_by": [
+    "domkit.Properties",
+    "domkit.Property"
+   ]
+  },
+  "domkit.CssValue": {
+   "file": "domkit/CssValue.hx",
+   "package": "domkit",
+   "lines": 501,
+   "doc_blocks": 48,
+   "types": [
+    "enum CssOp",
+    "enum CssValue",
+    "class HSL",
+    "class ValueParser"
+   ],
+   "heritage": [],
+   "deps": {
+    "domkit.CssParser": [
+     "use"
+    ],
+    "domkit.Property": [
+     "import",
+     "use"
+    ]
+   },
+   "used_by": [
+    "domkit.Checker",
+    "domkit.Component",
+    "domkit.CssParser",
+    "domkit.CssStyle",
+    "domkit.MetaComponent",
+    "domkit.Properties"
+   ]
+  },
+  "domkit.Error": {
+   "file": "domkit/Error.hx",
+   "package": "domkit",
+   "lines": 43,
+   "doc_blocks": 6,
+   "types": [
+    "class Error"
+   ],
+   "heritage": [],
+   "deps": {},
+   "used_by": [
+    "domkit.Checker",
+    "domkit.Component",
+    "domkit.CssParser",
+    "domkit.Interp",
+    "domkit.Macros",
+    "domkit.MarkupParser",
+    "domkit.MetaComponent"
+   ]
+  },
+  "domkit.Identifier": {
+   "file": "domkit/Identifier.hx",
+   "package": "domkit",
+   "lines": 33,
+   "doc_blocks": 4,
+   "types": [
+    "abstract Identifier"
+   ],
+   "heritage": [],
+   "deps": {},
+   "used_by": [
+    "domkit.CssParser",
+    "domkit.CssStyle",
+    "domkit.Properties"
+   ]
+  },
+  "domkit.Interp": {
+   "file": "domkit/Interp.hx",
+   "package": "domkit",
+   "lines": 415,
+   "doc_blocks": 10,
+   "types": [
+    "class ScriptInterp",
+    "class Interp"
+   ],
+   "heritage": [
+    [
+     "ScriptInterp",
+     "extends",
+     "hscript.Interp"
+    ]
+   ],
+   "deps": {
+    "domkit.Checker": [
+     "use"
+    ],
+    "domkit.Component": [
+     "use"
+    ],
+    "domkit.CssParser": [
+     "use"
+    ],
+    "domkit.Error": [
+     "use"
+    ],
+    "domkit.MarkupParser": [
+     "import",
+     "use"
+    ],
+    "domkit.Model": [
+     "use"
+    ],
+    "domkit.Properties": [
+     "use"
+    ],
+    "domkit.Property": [
+     "use"
+    ]
+   },
+   "used_by": [
+    "domkit.Macros"
+   ]
+  },
+  "domkit.Macros": {
+   "file": "domkit/Macros.hx",
+   "package": "domkit",
+   "lines": 844,
+   "doc_blocks": 13,
+   "types": [
+    "typedef ComponentData",
+    "class Macros"
+   ],
+   "heritage": [],
+   "deps": {
+    "domkit.Component": [
+     "use"
+    ],
+    "domkit.CssParser": [
+     "use"
+    ],
+    "domkit.Error": [
+     "import",
+     "use"
+    ],
+    "domkit.Interp": [
+     "use"
+    ],
+    "domkit.MarkupParser": [
+     "use"
+    ],
+    "domkit.MetaComponent": [
+     "use"
+    ],
+    "domkit.Properties": [
+     "use"
+    ],
+    "domkit.Property": [
+     "use"
+    ]
+   },
+   "used_by": [
+    "domkit.Component",
+    "domkit.CssParser",
+    "domkit.MetaComponent",
+    "domkit.Object"
+   ]
+  },
+  "domkit.MarkupParser": {
+   "file": "domkit/MarkupParser.hx",
+   "package": "domkit",
+   "lines": 1041,
+   "doc_blocks": 57,
+   "types": [
+    "enum_abstract MToken",
+    "typedef CodeExpr",
+    "enum MarkupKind",
+    "enum AttributeValue",
+    "typedef Argument",
+    "typedef Markup",
+    "typedef MarkupLoop",
+    "class MarkupParser"
+   ],
+   "heritage": [],
+   "deps": {
+    "domkit.Error": [
+     "use"
+    ]
+   },
+   "used_by": [
+    "domkit.Checker",
+    "domkit.Component",
+    "domkit.Interp",
+    "domkit.Macros"
+   ]
+  },
+  "domkit.MetaComponent": {
+   "file": "domkit/MetaComponent.hx",
+   "package": "domkit",
+   "lines": 716,
+   "doc_blocks": 9,
+   "types": [
+    "class MetaError",
+    "enum ParserMode",
+    "class MetaComponent"
+   ],
+   "heritage": [
+    [
+     "MetaComponent",
+     "extends",
+     "Component"
+    ]
+   ],
+   "deps": {
+    "domkit.Component": [
+     "extends",
+     "use"
+    ],
+    "domkit.CssParser": [
+     "use"
+    ],
+    "domkit.CssValue": [
+     "use"
+    ],
+    "domkit.Error": [
+     "use"
+    ],
+    "domkit.Macros": [
+     "use"
+    ],
+    "domkit.Property": [
+     "use"
+    ]
+   },
+   "used_by": [
+    "domkit.Macros"
+   ]
+  },
+  "domkit.Model": {
+   "file": "domkit/Model.hx",
+   "package": "domkit",
+   "lines": 31,
+   "doc_blocks": 6,
+   "types": [
+    "typedef Model",
+    "interface Model"
+   ],
+   "heritage": [],
+   "deps": {
+    "domkit.Properties": [
+     "use"
+    ]
+   },
+   "used_by": [
+    "domkit.CssStyle",
+    "domkit.Interp",
+    "domkit.Properties"
+   ]
+  },
+  "domkit.Object": {
+   "file": "domkit/Object.hx",
+   "package": "domkit",
+   "lines": 11,
+   "doc_blocks": 1,
+   "types": [
+    "interface Object"
+   ],
+   "heritage": [],
+   "deps": {
+    "domkit.Macros": [
+     "use"
+    ]
+   },
+   "used_by": []
+  },
+  "domkit.Properties": {
+   "file": "domkit/Properties.hx",
+   "package": "domkit",
+   "lines": 553,
+   "doc_blocks": 30,
+   "types": [
+    "enum SetAttributeResult",
+    "class DirtyList",
+    "class Properties"
+   ],
+   "heritage": [],
+   "deps": {
+    "domkit.Component": [
+     "use"
+    ],
+    "domkit.CssParser": [
+     "use"
+    ],
+    "domkit.CssStyle": [
+     "use"
+    ],
+    "domkit.CssValue": [
+     "use"
+    ],
+    "domkit.Identifier": [
+     "use"
+    ],
+    "domkit.Model": [
+     "use"
+    ],
+    "domkit.Property": [
+     "use"
+    ]
+   },
+   "used_by": [
+    "domkit.Component",
+    "domkit.CssStyle",
+    "domkit.Interp",
+    "domkit.Macros",
+    "domkit.Model"
+   ]
+  },
+  "domkit.Property": {
+   "file": "domkit/Property.hx",
+   "package": "domkit",
+   "lines": 68,
+   "doc_blocks": 9,
+   "types": [
+    "class InvalidProperty",
+    "class Property"
+   ],
+   "heritage": [],
+   "deps": {
+    "domkit.CssStyle": [
+     "use"
+    ]
+   },
+   "used_by": [
+    "domkit.Checker",
+    "domkit.Component",
+    "domkit.CssParser",
+    "domkit.CssStyle",
+    "domkit.CssValue",
+    "domkit.Interp",
+    "domkit.Macros",
+    "domkit.MetaComponent",
+    "domkit.Properties"
+   ]
+  }
+ },
+ "doc_order": [
+  [
+   "domkit.Error"
+  ],
+  [
+   "domkit.Identifier"
+  ],
+  [
+   "domkit.MarkupParser"
+  ],
+  [
+   "domkit.Checker",
+   "domkit.Component",
+   "domkit.CssParser",
+   "domkit.CssStyle",
+   "domkit.CssValue",
+   "domkit.Interp",
+   "domkit.Macros",
+   "domkit.MetaComponent",
+   "domkit.Model",
+   "domkit.Properties",
+   "domkit.Property"
+  ],
+  [
+   "domkit.Object"
+  ]
+ ],
+ "package_edges": {
+  "domkit": {}
+ }
+}
