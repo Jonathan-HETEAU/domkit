@@ -1,12 +1,36 @@
 package domkit;
 
+/**
+	A property set by a `Rule`.
+**/
 class RuleStyle {
+	/**
+		The property.
+	**/
 	public var p : Property;
+	/**
+		The CSS value.
+	**/
 	public var value : CssValue;
+	/**
+		The handler that last parsed the value, to reuse `lastValue`.
+	**/
 	public var lastHandler : Component.PropertyHandler<Dynamic,Dynamic>;
+	/**
+		The value parsed by `lastHandler`.
+	**/
 	public var lastValue : Dynamic;
+	/**
+		The next property applied to the object (temporary list).
+	**/
 	public var next : RuleStyle;
+	/**
+		The position in the CSS source, or `null`.
+	**/
 	public var pos : { pmin : Int, vmin : Int, pmax : Int, file: String };
+	/**
+		Creates the property.
+	**/
 	public function new(p, value, ?pos) {
 		this.p = p;
 		this.value = value;
@@ -14,11 +38,29 @@ class RuleStyle {
 	}
 }
 
+/**
+	A transition set by a `Rule`.
+**/
 class RuleTransition {
+	/**
+		The property.
+	**/
 	public var p : Property;
+	/**
+		The duration, in seconds.
+	**/
 	public var time : Float;
+	/**
+		The easing curve.
+	**/
 	public var curve : CssParser.Curve;
+	/**
+		The next transition applied to the object (temporary list).
+	**/
 	public var next : RuleTransition;
+	/**
+		Creates the transition.
+	**/
 	public function new(p, time, curve) {
 		this.p = p;
 		this.time = time;
@@ -26,43 +68,121 @@ class RuleTransition {
 	}
 }
 
+/**
+	A CSS rule for one selector, with its priority.
+**/
 class Rule {
+	/**
+		The index of the rule, to keep the declaration order among rules of equal priority.
+	**/
 	public var id : Int;
+	/**
+		The priority, from the specificity of the selector (ids, then classes and pseudo classes, then components) and `!important`.
+	**/
 	public var priority : Int;
+	/**
+		The selector.
+	**/
 	public var cl : CssParser.CssClass;
+	/**
+		The properties.
+	**/
 	public var style : Array<RuleStyle>;
+	/**
+		The transitions, or `null`.
+	**/
 	public var transitions : Array<RuleTransition>;
+	/**
+		Creates an empty rule.
+	**/
 	public function new() {
 	}
 }
 
+/**
+	A running transition of a property of an object.
+**/
 class CssTransition {
+	/**
+		The object.
+	**/
 	public var properties : Properties<Dynamic>;
+	/**
+		The transition.
+	**/
 	public var trans : RuleTransition;
+	/**
+		The handler applying the values.
+	**/
 	public var handler : Component.PropertyHandler<Dynamic,Dynamic>;
+	/**
+		The start value.
+	**/
 	public var vstart : Dynamic;
+	/**
+		The target value.
+	**/
 	public var vtarget : Dynamic;
+	/**
+		The progress, from `0` to `1`.
+	**/
 	public var progress : Float;
+	/**
+		Tells if the value is not a number: it changes at the end of the transition (unless the handler interpolates it).
+	**/
 	public var discrete : Bool;
+	/**
+		Creates the transition.
+	**/
 	public function new() {
 	}
 }
 
 #if hl
+/**
+	Bytes used for the component bit sets of the style cache: `hl.Bytes` on HashLink, `haxe.io.Bytes` elsewhere.
+**/
 @:forward(fill)
 abstract FastBytes(hl.Bytes) to hl.Bytes {
+	/**
+		Returns the byte at the index.
+	**/
 	public inline function get(index) return this.getUI8(index);
+	/**
+		Sets the byte at the index.
+	**/
 	public inline function set(index,value) this.setUI8(index, value);
+	/**
+		Returns a copy of `len` bytes from the index.
+	**/
 	public inline function sub(index,len) : FastBytes return cast this.sub(index, len);
+	/**
+		Returns the bytes of an `haxe.io.Bytes`.
+	**/
 	@:from public static inline function fromBytes(bytes:haxe.io.Bytes) : FastBytes {
 		return cast @:privateAccess bytes.b;
 	}
 }
 
+/**
+	An entry of a `BytesMap`.
+**/
 class BytesCell<T> {
+	/**
+		The key.
+	**/
 	public var bytes : hl.Bytes;
+	/**
+		The value.
+	**/
 	public var value : T;
+	/**
+		The next entry with the same hash.
+	**/
 	public var next : BytesCell<T>;
+	/**
+		Creates the entry.
+	**/
 	public function new(bytes,value,next) {
 		this.bytes = bytes;
 		this.value = value;
@@ -70,10 +190,16 @@ class BytesCell<T> {
 	}
 }
 
+/**
+	A map with bytes keys, used by the style cache on HashLink.
+**/
 abstract BytesMap<T>(Map<Int,BytesCell<T>>) {
 
 	static var BUF = new hl.Bytes(4);
 
+	/**
+		Creates an empty map.
+	**/
 	public function new() {
 		this = [];
 	}
@@ -85,6 +211,9 @@ abstract BytesMap<T>(Map<Int,BytesCell<T>>) {
 		return buf.getI32(0);
 	}
 
+	/**
+		Returns the value of the first `len` bytes, or `null`.
+	**/
 	public inline function get( bytes : hl.Bytes, len : Int ) {
 		var h = makeHash(bytes, len);
 		var c = this.get(h);
@@ -99,6 +228,9 @@ abstract BytesMap<T>(Map<Int,BytesCell<T>>) {
 		return value;
 	}
 
+	/**
+		Sets the value of the first `len` bytes.
+	**/
 	public inline function set( bytes : hl.Bytes, len : Int, value ) {
 		var h = makeHash(bytes, len);
 		var c = new BytesCell(bytes.sub(0,len), value, this.get(h));
@@ -108,21 +240,45 @@ abstract BytesMap<T>(Map<Int,BytesCell<T>>) {
 }
 #else
 
+/**
+	Bytes used for the component bit sets of the style cache: `hl.Bytes` on HashLink, `haxe.io.Bytes` elsewhere.
+**/
 typedef FastBytes = haxe.io.Bytes;
 
 #end
 
+/**
+	The rules of a `CssStyle`, sorted by priority, and the cache of the rules matching a set of components.
+**/
 class CssData {
 
+	/**
+		The number of components with an id.
+	**/
 	public static var CID = 0;
+	/**
+		The components used by the rules, by id.
+	**/
 	public static var COMPONENTS = [];
 
+	/**
+		The rules, sorted by decreasing priority after `init`.
+	**/
 	public var rules : Array<Rule>;
+	/**
+		The size of the component bit sets.
+	**/
 	public var bytesSize : Int = 0;
+	/**
+		Tells if rules were added since the last `init`.
+	**/
 	public var needsInit = false;
 
 	var rulesByComp : #if hl BytesMap<Array<Rule>> #else Map<String,Array<Rule>> #end;
 
+	/**
+		Creates empty data.
+	**/
 	public function new() {
 		rules = [];
 	}
@@ -133,6 +289,9 @@ class CssData {
 		return r2.id - r1.id;
 	}
 
+	/**
+		Gives an id to the component, if not done yet.
+	**/
 	public static function registerComponent(c:Component<Dynamic,Dynamic>) {
 		if( c != null && c.id < 0 ) {
 			COMPONENTS.push(c);
@@ -140,6 +299,9 @@ class CssData {
 		}
 	}
 
+	/**
+		Sorts the rules and registers their components, if rules were added.
+	**/
 	public function init() {
 		if( needsInit ) {
 			needsInit = false;
@@ -171,14 +333,23 @@ class CssData {
 		}
 	}
 
+	/**
+		Returns the rules cached for the set of components, or `null`.
+	**/
 	public inline function getCache( bits : FastBytes ) : Array<Rule> {
 		return rulesByComp.get(#if hl bits, bytesSize #else bits.toHex() #end);
 	}
 
+	/**
+		Caches the rules of the set of components.
+	**/
 	public inline function setCache( bits : FastBytes, value : Array<Rule> ) {
 		rulesByComp.set(#if hl bits, bytesSize #else bits.toHex() #end, value);
 	}
 
+	/**
+		Adds the rules of a style sheet.
+	**/
 	public function add( sheet : CssParser.CssSheet ) {
 		for( r in sheet ) {
 			for( cl in r.classes ) {
@@ -245,24 +416,39 @@ class CssData {
 		needsInit = true;
 	}
 
+	/**
+		Removes all the rules.
+	**/
 	public function clear() {
 		rules.resize(0);
 		needsInit = true;
 	}
 }
 
+/**
+	A style: CSS rules applied to objects with `Properties.applyStyle`, and the running transitions, updated with `updateTime`.
+**/
 @:access(domkit.Properties)
 class CssStyle {
 
 	static var TAG = 0;
 
+	/**
+		The rules.
+	**/
 	public var data : CssData;
+	/**
+		Caches the rules matching each set of components of an object and its parents, to test fewer rules.
+	**/
 	public var useSmartCache = true;
 	var currentTransitions : Array<CssTransition> = [];
 	var componentsBits : FastBytes;
 	var compSize : Int = 0;
 	var inApply = false;
 
+	/**
+		Creates an empty style.
+	**/
 	public function new() {
 		data = new CssData();
 	}
@@ -603,6 +789,9 @@ class CssStyle {
 			componentsBits.set(e.component.id >> 3, prev);
 	}
 
+	/**
+		Updates the running transitions, `dt` being the elapsed time in seconds.
+	**/
 	public function updateTime( dt : Float ) {
 		var i = 0;
 		var max = currentTransitions.length;
@@ -631,13 +820,22 @@ class CssStyle {
 		}
 	}
 
+	/**
+		Adds the rules of a style sheet.
+	**/
 	public function add( sheet : CssParser.CssSheet ) {
 		data.add(sheet);
 	}
+	/**
+		Removes all the rules.
+	**/
 	public function clear() {
 		data.clear();
 	}
 
+	/**
+		Tells if the selector matches the object.
+	**/
 	public static function ruleMatch( c : CssParser.CssClass, e : Properties<Dynamic> ) {
 		if( c.id.isDefined() && c.id != e.id )
 			return false;

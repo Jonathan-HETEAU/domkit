@@ -16,12 +16,21 @@ typedef ComponentData = {
 
 #end
 
+/**
+	The macros of DomKit: build the `domkit.Object` classes (`buildObject`), and the configuration functions to call from an initialization macro (`--macro`).
+**/
 class Macros {
 
+	/**
+		Returns the component remaps (see `registerComponentRemap`), for the runtime.
+	**/
 	public static macro function generateRemapMap() {
 		return macro $v{COMPONENTS_REMAP_REV};
 	}
 
+	/**
+		Returns the local variables, with their values and types, for the interpreted components (with hscript).
+	**/
 	public macro static function generateLocalsObj() {
 		#if hscript
 		var pos = Context.currentPos();
@@ -31,6 +40,9 @@ class Macros {
 		#end
 	}
 
+	/**
+		Returns the local variables as an object (with hscript).
+	**/
 	public macro static function generateLocalsTypes() {
 		#if hscript
 		var pos = Context.currentPos();
@@ -40,6 +52,9 @@ class Macros {
 		#end
 	}
 
+	/**
+		Sets back the local variables from `__locals`, after the interpreted markup (with hscript).
+	**/
 	public macro static function generateLocalsRestore() {
 		#if hscript
 		var pos = Context.currentPos();
@@ -72,34 +87,55 @@ class Macros {
 	}
 	#end
 
+	/**
+		Enables the interpreted components (see `domkit.Interp`). Requires `hscript.LiveClass.enable()` first.
+	**/
 	public static function allowInterp(b:Bool=true) {
 		if( #if hscript !hscript.LiveClass.isEnable() #else true #end )
 			Context.error("domkit.Macro.allowInterp() requires previous hscript.LiveClass.enable() call", Context.currentPos());
 		ALLOW_INTERP = b;
 	}
 
+	/**
+		Expands the `@id(args)` macros of the markup into markup nodes. Returns `null` by default: set it to define macros.
+	**/
 	public static dynamic function processMacro( id : String, args : Null<Array<haxe.macro.Expr>>, pos : haxe.macro.Expr.Position ) : MarkupParser.Markup {
 		return null;
 	}
 
+	/**
+		Loads the markup of a class with `@:source(path)` instead of a `SRC` field. Fails by default: set it to support `@:source`.
+	**/
 	@:persistent public static dynamic function onSourceLoad( path : String, pos : haxe.macro.Expr.Position, fields : Array<Field>, params : Array<Expr> ) : { dml : domkit.MarkupParser.Markup, pos : haxe.macro.Expr.Position } {
 		Context.error("@:source found but no source loader defined", pos);
 		return null;
 	}
 
+	/**
+		Renames a component: the markup and CSS using `newName` use the component `oldName`.
+	**/
 	public static function registerComponentRemap( oldName : String, newName : String ) {
 		COMPONENTS_REMAP_REV.set(newName, oldName);
 	}
 
+	/**
+		Adds a path where components are searched by name, `$` being replaced by the class name (`"mylib.ui.$Comp"`).
+	**/
 	public static function registerComponentsPath( path : String ) {
 		if( componentsSearchPath.indexOf(path) < 0 )
 			componentsSearchPath.push(path);
 	}
 
+	/**
+		Sets the class of the default `ValueParser` of the components without `@:parser`.
+	**/
 	public static function setDefaultParser( path : String ) {
 		defaultParserPath = path;
 	}
 
+	/**
+		Checks a CSS file against the components at compile time: unsupported properties and invalid values are compilation errors.
+	**/
 	public static function checkCSS( file : String ) {
 		if( Context.defined("display") ) return;
 		file = Context.resolvePath(file);
@@ -705,6 +741,9 @@ class Macros {
 		});
 	}
 
+	/**
+		Builds a `domkit.Object` class: declares its component and generates `initComponent()` from its `SRC` markup.
+	**/
 	public static function buildObject() {
 		var pre = preload;
 		if( pre.length > 0 ) {

@@ -1,12 +1,27 @@
 package domkit;
 import domkit.Property;
 
+/**
+	How a component handles a CSS property: parses its value, applies it to the objects of type `O`, and interpolates it for the transitions.
+**/
 class PropertyHandler<O,P> {
 
+	/**
+		Converts the CSS value to the property value. Throws `Property.InvalidProperty` if invalid.
+	**/
 	public var parser(default,null) : CssValue -> P;
 	#if !macro
+	/**
+		The value applied when no CSS rule sets the property.
+	**/
 	public var defaultValue(default,null) : P;
+	/**
+		Applies the value to an object.
+	**/
 	public var apply(default,null) : O -> P -> Void;
+	/**
+		Interpolates between two values, or `null` (floats are interpolated, other values change at the end of the transition).
+	**/
 	public var transition(default,null) : P -> P -> Float -> P;
 	#end
 
@@ -19,6 +34,9 @@ class PropertyHandler<O,P> {
 	public var fieldName : String;
 	#end
 
+	/**
+		Creates the handler.
+	**/
 	public function new(parser,def,applyType) {
 		this.parser = parser;
 		this.defaultValue = def;
@@ -30,18 +48,39 @@ class PropertyHandler<O,P> {
 	}
 }
 
+/**
+	Declares the component of another class `T`: a class implementing `ComponentDecl<T>` (with `domkit.Object`) defines the properties of `T`, for classes that can't be modified.
+**/
 interface ComponentDecl<T> {
 }
 
+/**
+	A component: the name used in the markup and in CSS (`button`, `flow`...), how to create its objects of type `T`, and how it handles the CSS properties. Components are created by the macros (`domkit.Object` classes) and registered by name.
+**/
 class Component<BaseT,T> {
 
+	/**
+		The index of the component, used by the style cache (`-1` until it is used by a CSS rule).
+	**/
 	public var id = -1;
+	/**
+		The name of the component.
+	**/
 	public var name : String;
+	/**
+		Creates an object of the component, from the constructor arguments and the parent object.
+	**/
 	public var make : Array<Dynamic> -> BaseT -> T;
+	/**
+		The parent component: its properties are inherited, and its CSS rules apply.
+	**/
 	public var parent : Component<BaseT,Dynamic>;
 	var propsHandler : Array<PropertyHandler<T,Dynamic>>;
 	var classValue : Class<Dynamic>;
 
+	/**
+		Creates and registers the component.
+	**/
 	public function new(name, make, parent) {
 		this.name = name;
 		this.make = make;
@@ -50,10 +89,16 @@ class Component<BaseT,T> {
 		COMPONENTS.set(name, this);
 	}
 
+	/**
+		Returns the handler of the property, or `null` if the component doesn't support it.
+	**/
 	public inline function getHandler<P>( p : Property ) : PropertyHandler<T,P> {
 		return cast propsHandler[p.id];
 	}
 
+	/**
+		Tells if the component is `c` or inherits from it.
+	**/
 	public function isOfType( c : Component<BaseT,T> ) {
 		var me = this;
 		do {
@@ -73,6 +118,9 @@ class Component<BaseT,T> {
 		return ph;
 	}
 
+	/**
+		Returns the component of the given name (after the remaps). Throws if unknown, or returns `null` if `opt` is set.
+	**/
 	public static function get( name : String, opt = false ) {
 		name = resolveRemaps(name);
 		var c = COMPONENTS.get(name);
@@ -83,6 +131,9 @@ class Component<BaseT,T> {
 	#if !macro
 	static var RUNTIME_REMAP : Map<String,String> = domkit.Macros.generateRemapMap();
 	#end
+	/**
+		Returns the name of the component used for `name` (see `domkit.Macros.registerComponentRemap`), or `name` itself.
+	**/
 	public static function resolveRemaps( name : String ) : String {
 		var newName = #if !macro RUNTIME_REMAP #else @:privateAccess Macros.COMPONENTS_REMAP_REV #end.get(name);
 		if( newName != null )
@@ -90,6 +141,9 @@ class Component<BaseT,T> {
 		return name;
 	}
 
+	/**
+		Creates the objects declared by an inline markup, and returns the root: `Component.build(<flow><text text="hi"/></flow>, parent)`.
+	**/
 	public static macro function build( expr, ?parent ) {
 		switch( expr.expr ) {
 		case EMeta({ name : ":markup" },{ expr : EConst(CString(str)) }):

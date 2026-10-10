@@ -4,36 +4,102 @@ import domkit.MarkupParser;
 import hscript.Checker.TType in Type;
 import hscript.Expr in Expr;
 
+/**
+	How a property value is parsed, for the type checking of CSS values.
+**/
 enum PropParser {
+	/**
+		Unknown parser: the value is not checked.
+	**/
 	PUnknown;
+	/**
+		The `parse<Name>` method of the `ValueParser`.
+	**/
 	PNamed( name : String );
+	/**
+		A nullable value, where `def` (`auto` or `none`) means `null`.
+	**/
 	POpt( t : PropParser, def : String );
+	/**
+		The constructors of an enum.
+	**/
 	PEnum( e : hscript.Checker.CEnum );
 }
 
+/**
+	A property of a component, with its type.
+**/
 typedef TypedProperty = {
+	/**
+		The type of the property.
+	**/
 	var type : Type;
+	/**
+		The component declaring the property.
+	**/
 	var comp : TypedComponent;
+	/**
+		The field of the component class.
+	**/
 	var field : String;
+	/**
+		How the CSS values are parsed.
+	**/
 	var parser : PropParser;
 }
 
+/**
+	A component, with the types of its class, properties and constructor arguments.
+**/
 typedef TypedComponent = {
+	/**
+		The name of the component.
+	**/
 	var name : String;
+	/**
+		The class of the component.
+	**/
 	var ?classDef : hscript.Checker.CClass;
+	/**
+		The parent component.
+	**/
 	var ?parent : { comp : TypedComponent, params : Array<Type> };
+	/**
+		The properties declared by the component, by CSS name.
+	**/
 	var properties : Map<String, TypedProperty>;
+	/**
+		The constructor arguments (without the parent).
+	**/
 	var arguments : Array<{ name : String, t : Type, ?opt : Bool }>;
+	/**
+		The runtime component.
+	**/
 	var domkitComp : domkit.Component<Dynamic,Dynamic>;
 }
 
+/**
+	Type checks the markup and the CSS of components at runtime (for the interpreted components of `Interp`, or in editors such as Hide), from the types of the Heaps components (`h2d.domkit.InitComponents.build()` classes).
+**/
 class Checker extends hscript.Checker {
 
+	/**
+		The `String` type.
+	**/
 	public var t_string : Type;
+	/**
+		The components, by name.
+	**/
 	public var components : Map<String,TypedComponent>;
+	/**
+		The components properties, by CSS name.
+	**/
 	public var properties : Map<String, Array<TypedProperty>>;
 	var onMarkup : String -> Expr -> Void;
 
+	/**
+		Creates the checker from the types of the program (`hscript.LiveClass.getTypes()`).
+	**/
 	public function new(types) {
 		super(types);
 		allowPrivateAccess = true;
@@ -45,15 +111,24 @@ class Checker extends hscript.Checker {
 			throw "XML types API was not initialized";
 	}
 
+	/**
+		Starts checking code, `onMarkup` being called for the markup expressions.
+	**/
 	public function begin( onMarkup ) {
 		this.onMarkup = onMarkup;
 		check(#if hscriptPos { e : EBlock([]), pmin : 0, pmax : 0, origin : "", line : 0 } #else EBlock([]) #end);
 	}
 
+	/**
+		Ends the checking.
+	**/
 	public function done() {
 		onMarkup = null;
 	}
 
+	/**
+		Converts a Haxe name to CSS casing (see `CssParser.haxeToCss`).
+	**/
 	public function haxeToCss( name : String ) {
 		return CssParser.haxeToCss(name);
 	}
@@ -70,16 +145,25 @@ class Checker extends hscript.Checker {
 		return super.checkMeta(m, args, next, expr, withType);
 	}
 
+	/**
+		Returns the component of the given name (after the remaps), or `null`.
+	**/
 	public function getComponent( name : String ) {
 		return components.get(domkit.Component.resolveRemaps(name));
 	}
 
+	/**
+		Returns new monomorphs for the type parameters of the component class, or `null`.
+	**/
 	public function makeParams( c : TypedComponent ) : Null<Array<Type>> {
 		if( c == null || c.classDef == null || c.classDef.params.length == 0 )
 			return null;
 		return [for( p in c.classDef.params ) makeMono()];
 	}
 
+	/**
+		Returns the property of the component or of its parents, or `null`.
+	**/
 	public function resolveProperty( comp : TypedComponent, name : String ) {
 		while( comp != null ) {
 			var p = comp.properties.get(name);
@@ -264,18 +348,33 @@ class Checker extends hscript.Checker {
 
 }
 
+/**
+	Parses and type checks the markup of a component (DML), and checks CSS rules against the components.
+**/
 class DMLChecker {
 
 	var filePath : String;
 	var parser : hscript.Parser;
 	var checker : Checker;
+	/**
+		The value parsers used to check the CSS values.
+	**/
 	public var parsers : Array<domkit.CssValue.ValueParser> = [new domkit.CssValue.ValueParser()];
+	/**
+		The components using each id (`#id`) or class, to check the CSS rules using them.
+	**/
 	public var definedIdents : Map<String, Array<TypedComponent>> = new Map();
 
+	/**
+		Creates the checker.
+	**/
 	public function new(checker:Checker) {
 		this.checker = checker;
 	}
 
+	/**
+		Returns the content of a file (for the `import.hx` files), or `null`.
+	**/
 	public dynamic function loadFile( path : String ) : Null<String> {
 		#if (sys || hxnodejs)
 		return try sys.io.File.getContent(path) catch( e : Dynamic ) null;
@@ -283,6 +382,9 @@ class DMLChecker {
 		return null;
 		#end
 	}
+	/**
+		Parses and checks the markup of a component, with the types of the `locals` (see `domkit.Macros.generateLocalsObj`). Throws an error if invalid.
+	**/
 	public function parse( data : String, filePath : String, filePos : Int, locals : {} ) : Markup {
 		var parser = new MarkupParser();
 		var dml = parser.parse(data,filePath,filePos).children[0];
@@ -597,6 +699,9 @@ class DMLChecker {
 		}
 	}
 
+	/**
+		Registers a component using the id or class `cl`.
+	**/
 	public function defineIdent( c : TypedComponent, cl : String ) {
 		var comps = definedIdents.get(cl);
 		if( comps == null ) {
@@ -607,6 +712,9 @@ class DMLChecker {
 			comps.push(c);
 	}
 
+	/**
+		Checks the properties of the rules against the components they apply to.
+	**/
 	public function checkCSS( rules : CssParser.CssSheet ) {
 		for( r in rules ) {
 			var comp = { r : null };

@@ -1,9 +1,24 @@
 package domkit;
 
+/**
+	The result of `Properties.setAttribute`.
+**/
 enum SetAttributeResult {
+	/**
+		The value was applied.
+	**/
 	Ok;
+	/**
+		The property is unknown.
+	**/
 	Unknown;
+	/**
+		The component doesn't support the property.
+	**/
 	Unsupported;
+	/**
+		The value is invalid for the property.
+	**/
 	InvalidValue( ?msg : String );
 }
 
@@ -70,16 +85,46 @@ private class DirtyList<T:Model<T>> {
 	}
 }
 
+/**
+	The DomKit state of an object (its `dom` field): component, id, classes, pseudo class states (`hover`, `active`...) and the CSS values set on it. Changing them marks the object to be styled again by the next `applyStyle`.
+**/
 class Properties<T:Model<T>> {
 
+	/**
+		The id of the object (`#id` in CSS), set with `setId`.
+	**/
 	public var id(default,null) : Identifier;
+	/**
+		The object.
+	**/
 	public var obj(default,null) : Model<T>;
+	/**
+		The component of the object.
+	**/
 	public var component(default,null) : Component<T,Dynamic>;
+	/**
+		Matches the `:hover` pseudo class.
+	**/
 	public var hover(default,set) : Bool = false;
+	/**
+		Matches the `:active` pseudo class.
+	**/
 	public var active(default,set) : Bool = false;
+	/**
+		Matches the `:disabled` pseudo class.
+	**/
 	public var disabled(default,set) : Bool = false;
+	/**
+		Matches the `:focus` pseudo class.
+	**/
 	public var focus(default,set) : Bool = false;
+	/**
+		The properties of the parent object, or `null`.
+	**/
 	public var parent(get,never) : Properties<T>;
+	/**
+		The object to which the children declared in the markup are added (the object itself by default).
+	**/
 	public var contentRoot(default,null) : Model<T>;
 
 	var classes : Array<Identifier>;
@@ -98,6 +143,9 @@ class Properties<T:Model<T>> {
 
 	static var KEEP_VALUES = false;
 
+	/**
+		Creates the properties of the object.
+	**/
 	public function new(obj,component) {
 		this.obj = obj;
 		this.component = component;
@@ -121,16 +169,25 @@ class Properties<T:Model<T>> {
 	}
 
 	static var EMPTY_CLASSES = [];
+	/**
+		Returns the classes of the object.
+	**/
 	public function getClasses() : Iterable<Identifier> {
 		return classes == null ? EMPTY_CLASSES : classes;
 	}
 
+	/**
+		Tells if the object has the class.
+	**/
 	public function hasClass( name : String ) {
 		if( classes == null )
 			return false;
 		return classes.indexOf(new Identifier(name)) >= 0;
 	}
 
+	/**
+		Must be called when the object is added to or removed from a parent, to style it again.
+	**/
 	public function onParentChanged( ?prev : Properties<T> ) {
 		var p = parent;
 		if( dirty != null )
@@ -155,6 +212,9 @@ class Properties<T:Model<T>> {
 		return p == null ? null : cast p.dom;
 	}
 
+	/**
+		Adds a class.
+	**/
 	public function addClass( c : String ) {
 		if( c == null )
 			return;
@@ -169,6 +229,9 @@ class Properties<T:Model<T>> {
 
 	static var APPLY_LOOPS = 0;
 
+	/**
+		Applies the style to the objects that need it, from this object's tree.
+	**/
 	public function applyStyle( style : CssStyle ) @:privateAccess {
 		var prev = APPLY_LOOPS;
 		var wasDirty = false;
@@ -184,6 +247,9 @@ class Properties<T:Model<T>> {
 		dirty.addCount = 0;
 	}
 
+	/**
+		Removes a class.
+	**/
 	public function removeClass( c : String ) {
 		if( classes == null || c == null )
 			return;
@@ -194,6 +260,9 @@ class Properties<T:Model<T>> {
 		}
 	}
 
+	/**
+		Adds the class if `b` is set, removes it if `b` is `false`, or toggles it if `b` is `null`.
+	**/
 	public function toggleClass( c : String, ?b : Bool ) {
 		if( c == null )
 			return;
@@ -241,6 +310,9 @@ class Properties<T:Model<T>> {
 		needRefresh();
 	}
 
+	/**
+		Sets the attributes from their CSS strings (see `setAttribute`). Invalid ones are printed on `sys` targets.
+	**/
 	public function initAttributes( attr : haxe.DynamicAccess<String> ) {
 		var parser = new CssParser();
 		for( a in attr.keys() ) {
@@ -264,6 +336,9 @@ class Properties<T:Model<T>> {
 		}
 	}
 
+	/**
+		Replaces the classes, from a string (`"a b"`) or from an object whose fields set to `true` are the classes (`_` becoming `-`).
+	**/
 	public function setClasses( ?classStr : String, ?classObj : Dynamic<Bool> ) {
 		var cl;
 		if( classStr != null )
@@ -287,6 +362,9 @@ class Properties<T:Model<T>> {
 		if( !sameClasses(classes,prevClasses) )
 			needRefresh();
 	}
+	/**
+		Adds classes, from a string (`"a b"`) or from an object whose fields set to `true` are the classes (`_` becoming `-`).
+	**/
 	public function appendClasses( ?classStr : String, ?classObj : Dynamic<Bool> ) {
 		var cl;
 		if( classStr != null )
@@ -331,8 +409,8 @@ class Properties<T:Model<T>> {
 	}
 
 	/**
-	 * Will remove other class starting with `kind-` and enable `kind-value` class instead
-	 */
+		Removes the class starting with `kind-` and adds the class `kind-value` instead (none if `value` is `null`).
+	**/
 	public function setClassKind( kind : String, value : String ) {
 		kind += "-";
 		var full = value == null ? null : new Identifier(kind + value);
@@ -350,6 +428,9 @@ class Properties<T:Model<T>> {
 		needRefresh();
 	}
 
+	/**
+		Sets the id of the object, or `null`.
+	**/
 	public function setId( id : String ) {
 		var id = id == null ? null : new Identifier(id);
 		if( this.id == id ) return;
@@ -358,6 +439,9 @@ class Properties<T:Model<T>> {
 		needRefresh();
 	}
 
+	/**
+		Sets a property of the object, as an inline style (it has priority over the CSS rules), and applies it. `id` and `class` set the id and add classes.
+	**/
 	public function setAttribute( p : String, value : CssValue ) : SetAttributeResult {
 		var p = Property.get(p,false);
 		if( p == null )
@@ -442,6 +526,9 @@ class Properties<T:Model<T>> {
 	static dynamic function updateComponentId( p : Properties<Dynamic> ) {
 	}
 
+	/**
+		Creates the properties of an existing object for the component of the given name, with optional attributes.
+	**/
 	public static function create<BaseT:Model<BaseT>,T:BaseT>( comp : String, value : T, ?attributes : haxe.DynamicAccess<String> ) {
 		if( value == null ) throw "Component value is not set";
 		var c = Component.get(comp);

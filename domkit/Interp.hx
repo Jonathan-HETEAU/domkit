@@ -5,12 +5,18 @@ package domkit;
 
 import domkit.MarkupParser;
 
+/**
+	The hscript interpreter running the code of an interpreted component.
+**/
 class ScriptInterp extends hscript.Interp {
 
 	var ctx : Interp;
 	var obj : Model<Dynamic>;
 	var objLocals : {};
 
+	/**
+		Creates the interpreter of the object, with the local variables of its constructor.
+	**/
 	public function new(ctx,obj,locals) {
 		super();
 		this.ctx = ctx;
@@ -46,6 +52,9 @@ class ScriptInterp extends hscript.Interp {
 		return null;
 	}
 
+	/**
+		Runs `callb` for each value of the iterator, as the variable `n`.
+	**/
 	public function executeLoop( n : String, it : hscript.Expr, callb ) {
 		var old = declared.length;
 		declared.push({ n : n, old : locals.get(n) });
@@ -58,6 +67,9 @@ class ScriptInterp extends hscript.Interp {
 		restore(old);
 	}
 
+	/**
+		Runs `callb` for each key and value of the iterator, as the variables `vk` and `vv`.
+	**/
 	public function executeKeyValueLoop( vk : String, vv : String, it : hscript.Expr, callb ) {
 		var old = declared.length;
 		declared.push({ n : vk, old : locals.get(vk) });
@@ -75,6 +87,9 @@ class ScriptInterp extends hscript.Interp {
 
 }
 
+/**
+	Runs the markup of components with hscript instead of compiled code, to reload it while the program runs (hot reload). Enable it with `domkit.Macros.allowInterp()` (after `hscript.LiveClass.enable()`), and compile with `-lib hscript -D hscriptPos`.
+**/
 class Interp {
 
 	var compName : String;
@@ -87,6 +102,9 @@ class Interp {
 
 	static var checker : Checker;
 
+	/**
+		Returns the shared `Checker`.
+	**/
 	public static function getChecker() {
 		if( checker != null )
 			return checker;
@@ -288,6 +306,9 @@ class Interp {
 	}
 
 	static var COMP_CACHE = new Map();
+	/**
+		Builds the children of the object by interpreting the markup of its component. Called by the generated `initComponent()`.
+	**/
 	public static function run( obj : Model<Dynamic>, compName : String, locals : {} ) {
 		function execute() {
 			var i = COMP_CACHE.get(compName);
@@ -320,6 +341,9 @@ class Interp {
 		}
 	}
 
+	/**
+		Forgets the parsed markup of the component, to load it again.
+	**/
 	public static function clearCache( name : String ) {
 		COMP_CACHE.remove(name);
 	}
@@ -355,8 +379,14 @@ class Interp {
 		return null;
 	}
 
+	/**
+		Called on errors, if set (errors are thrown otherwise).
+	**/
 	public static var onError : (msg:String) -> Void;
 
+	/**
+		Watches the source files of the interpreted components: `callb` is called with the class of a component whose markup changed. Returns `true` if a source was found.
+	**/
 	public static function init( callb ) {
 		var found = false;
 		for( comp in COMPONENTS ) {

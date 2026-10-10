@@ -1,37 +1,118 @@
 package domkit;
 import domkit.Property.InvalidProperty;
 
+/**
+	An arithmetic operator in a CSS value.
+**/
 enum CssOp {
+	/**
+		`+`
+	**/
 	OAdd;
+	/**
+		`-`
+	**/
 	OSub;
+	/**
+		`*`
+	**/
 	OMult;
+	/**
+		`/`
+	**/
 	ODiv;
 }
 
+/**
+	A parsed CSS value.
+**/
 enum CssValue {
+	/**
+		An identifier.
+	**/
 	VIdent( i : String );
+	/**
+		A quoted string.
+	**/
 	VString( s : String );
+	/**
+		A number with a unit (`10px`, `50%`).
+	**/
 	VUnit( v : Float, unit : String );
+	/**
+		A float.
+	**/
 	VFloat( v : Float );
+	/**
+		An integer.
+	**/
 	VInt( v : Int );
+	/**
+		A hexadecimal color (`#F80`), with its digits and value.
+	**/
 	VHex( h : String, v : Int );
+	/**
+		Values separated by commas.
+	**/
 	VList( l : Array<CssValue> );
+	/**
+		Values separated by spaces.
+	**/
 	VGroup( l : Array<CssValue> );
+	/**
+		A function call (`rgba(...)`, `url(...)`).
+	**/
 	VCall( f : String, vl : Array<CssValue> );
+	/**
+		A value with a label (`!important`).
+	**/
 	VLabel( v : String, val : CssValue );
+	/**
+		A `/` separator.
+	**/
 	VSlash;
+	/**
+		An array access (`a[b]`).
+	**/
 	VArray( v : CssValue, ?content : CssValue );
+	/**
+		An arithmetic operation.
+	**/
 	VOp( op : CssOp, v1 : CssValue, v2 : CssValue );
+	/**
+		A value in parentheses.
+	**/
 	VParent( v : CssValue );
+	/**
+		A variable (`@name`).
+	**/
 	VVar( name : String );
 }
 
+/**
+	A color in the HSL color space, used by the `darken`, `lighten`, `saturate` and `desaturate` color functions.
+**/
 class HSL {
+	/**
+		The alpha, from `0` to `1`.
+	**/
 	public var alpha : Float;
+	/**
+		The hue, in radians.
+	**/
 	public var hue : Float;
+	/**
+		The saturation, from `0` to `1`.
+	**/
 	public var saturation : Float;
+	/**
+		The lightness, from `0` to `1`.
+	**/
 	public var lightness : Float;
 
+	/**
+		Converts an ARGB color.
+	**/
 	public function new(color:Int) {
 		var r = ((color >> 16) & 0xFF) / 255;
 		var g = ((color >> 8) & 0xFF) / 255;
@@ -59,6 +140,9 @@ class HSL {
 		this.lightness = l;
 	}
 
+	/**
+		Returns the ARGB color.
+	**/
 	public function toColor() {
 		var r:Float,g:Float,b:Float;
 		var hue = hue % (Math.PI * 2);
@@ -105,21 +189,36 @@ class HSL {
 	}
 }
 
+/**
+	Converts CSS values to property values: the `parseXxx` methods are used by the `@:p(xxx)` fields (`@:p(color)` uses `parseColor`). Extend it to add parsers, and set it with `@:parser` or `domkit.Macros.setDefaultParser`. The methods throw `Property.InvalidProperty` for invalid values.
+**/
 class ValueParser {
 
 	var defaultColor = 0;
 
+	/**
+		Creates the parser.
+	**/
 	public function new() {
 	}
 
+	/**
+		Throws an `Property.InvalidProperty` error.
+	**/
 	public function invalidProp( ?msg ) : Dynamic {
 		throw new InvalidProperty(msg);
 	}
 
+	/**
+		Parses an identifier.
+	**/
 	public function parseIdent( v : CssValue ) {
 		return switch( v ) { case VIdent(v): v; default: invalidProp(); }
 	}
 
+	/**
+		Parses a string or an identifier.
+	**/
 	public function parseString( v : CssValue ) {
 		return switch( v ) {
 		case VIdent(i): i;
@@ -128,6 +227,9 @@ class ValueParser {
 		}
 	}
 
+	/**
+		Parses an object id.
+	**/
 	public function parseId( v : CssValue ) {
 		return switch( v ) {
 		case VIdent(n): n;
@@ -157,6 +259,9 @@ class ValueParser {
 		"white" => 0xFFFFFF,
 	];
 
+	/**
+		Parses a color, as an ARGB integer: `#RGB`, `#RRGGBB`, `rgb(r,g,b)`, `rgba(r,g,b,a)`, CSS color names, `darken(c,10%)`, `lighten(c,10%)`, `saturate(c,10%)`, `desaturate(c,10%)`, and `color alpha`.
+	**/
 	public function parseColor( v : CssValue ) {
 		switch( v ) {
 		case VHex(h,color):
@@ -219,6 +324,9 @@ class ValueParser {
 		}
 	}
 
+	/**
+		Interpolates between two ARGB colors.
+	**/
 	public function transitionColor( a : Null<Int>, b : Null<Int>, p : Float ) {
 		var a : Int = a == null ? defaultColor : a;
 		var b : Int = b == null ? defaultColor : b;
@@ -232,6 +340,9 @@ class ValueParser {
 		return f < min ? min : (f > max ? max : f);
 	}
 
+	/**
+		Parses values separated by spaces, with `elt`.
+	**/
 	public function parseArray<T>( elt : CssValue -> T, v : CssValue ) : Array<T> {
 		return switch( v ) {
 		case VGroup(vl): [for( v in vl ) elt(v)];
@@ -239,6 +350,9 @@ class ValueParser {
 		}
 	}
 
+	/**
+		Parses a path: a string, an identifier or `url(path)`.
+	**/
 	public function parsePath( v : CssValue ) {
 		return switch( v ) {
 		case VString(v): v;
@@ -248,6 +362,9 @@ class ValueParser {
 		}
 	}
 
+	/**
+		Parses a boolean: `true`, `false`, `1` or `0`.
+	**/
 	public function parseBool( v : CssValue ) : Null<Bool> {
 		return switch( v ) {
 		case VIdent("true") | VInt(1): true;
@@ -256,14 +373,23 @@ class ValueParser {
 		}
 	}
 
+	/**
+		Returns `null` for `auto`, or parses the value with `either`.
+	**/
 	public function parseAuto<T>( either : CssValue -> T, v : CssValue ) : Null<T> {
 		return v.match(VIdent("auto")) ? null : either(v);
 	}
 
+	/**
+		Returns `null` for `none`, or parses the value with `either`.
+	**/
 	public function parseNone<T>( either : CssValue -> T, v : CssValue ) : Null<T> {
 		return v.match(VIdent("none")) ? null : either(v);
 	}
 
+	/**
+		Parses an integer.
+	**/
 	public function parseInt( v : CssValue ) : Null<Int> {
 		return switch( v ) {
 		case VInt(i): i;
@@ -271,6 +397,9 @@ class ValueParser {
 		}
 	}
 
+	/**
+		Parses a number.
+	**/
 	public function parseFloat( v : CssValue ) : Float {
 		return switch( v ) {
 		case VInt(i): i;
@@ -279,6 +408,9 @@ class ValueParser {
 		}
 	}
 
+	/**
+		Parses a number, or a percentage as a ratio (`50%` is `0.5`).
+	**/
 	public function parseFloatPercent( v : CssValue ) : Float {
 		return switch( v ) {
 		case VUnit(v,"%"): v / 100;
@@ -286,6 +418,9 @@ class ValueParser {
 		}
 	}
 
+	/**
+		Parses two numbers, as `{ x, y }`.
+	**/
 	public function parseXY( v : CssValue ) {
 		return switch( v ) {
 		case VGroup([x,y]): { x : parseFloat(x), y : parseFloat(y) };
@@ -293,6 +428,9 @@ class ValueParser {
 		}
 	}
 
+	/**
+		Parses 1 to 4 integers as `{ top, right, bottom, left }`, like the CSS `padding`.
+	**/
 	public function parseBox( v : CssValue ) {
 		switch( v ) {
 		case VInt(v):
@@ -308,6 +446,9 @@ class ValueParser {
 		}
 	}
 
+	/**
+		Parses 1 to 4 values with `f`, as `{ top, right, bottom, left }`, like the CSS `padding`.
+	**/
 	public function parseGenBox<T>( v : CssValue, f : CssValue -> T ) {
 		switch( v ) {
 		case VGroup([v,h]):
@@ -331,6 +472,9 @@ class ValueParser {
 		}
 	}
 
+	/**
+		Returns a parser of the constructors of the enum, in CSS casing (`TopLeft` is `top-left`) or lower case.
+	**/
 	public function makeEnumParser<T:EnumValue>( e : Enum<T> ) : CssValue -> T {
 		var h = new Map();
 		var all = [];

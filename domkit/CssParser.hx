@@ -1,56 +1,179 @@
 package domkit;
 import domkit.CssValue;
 
+/**
+	A token of the CSS lexer.
+**/
 enum Token {
+	/**
+		An identifier.
+	**/
 	TIdent( i : String );
+	/**
+		A quoted string.
+	**/
 	TString( s : String );
+	/**
+		An integer.
+	**/
 	TInt( i : Int );
+	/**
+		A float.
+	**/
 	TFloat( f : Float );
+	/**
+		`:`
+	**/
 	TDblDot;
+	/**
+		`#`
+	**/
 	TSharp;
+	/**
+		`(`
+	**/
 	TPOpen;
+	/**
+		`)`
+	**/
 	TPClose;
+	/**
+		`!`
+	**/
 	TExclam;
+	/**
+		`,`
+	**/
 	TComma;
+	/**
+		The end of the input.
+	**/
 	TEof;
+	/**
+		`%`
+	**/
 	TPercent;
+	/**
+		`;`
+	**/
 	TSemicolon;
+	/**
+		`{`
+	**/
 	TBrOpen;
+	/**
+		`}`
+	**/
 	TBrClose;
+	/**
+		`.`
+	**/
 	TDot;
+	/**
+		Spaces (in selectors).
+	**/
 	TSpaces;
+	/**
+		`/`
+	**/
 	TSlash;
+	/**
+		`*`
+	**/
 	TStar;
+	/**
+		`+`
+	**/
 	TPlus;
+	/**
+		`-`
+	**/
 	TMinus;
+	/**
+		`[`
+	**/
 	TBkOpen;
+	/**
+		`]`
+	**/
 	TBkClose;
+	/**
+		`>`
+	**/
 	TSuperior;
+	/**
+		`&`
+	**/
 	TAnd;
+	/**
+		`@`
+	**/
 	TAt;
 }
 
+/**
+	The pseudo classes of a CSS selector, as bit flags.
+**/
 enum abstract PseudoClass(Int) {
 
+	/**
+		No pseudo class.
+	**/
 	var None = 0;
+	/**
+		`:hover`: the object is hovered (`Properties.hover`).
+	**/
 	var Hover = 1;
+	/**
+		`:first-child`.
+	**/
 	var FirstChild = 2;
+	/**
+		`:last-child`.
+	**/
 	var LastChild = 4;
+	/**
+		`:odd`: the children at an odd index, counting from 0.
+	**/
 	var Odd = 8;
+	/**
+		`:even`: the children at an even index, counting from 0.
+	**/
 	var Even = 16;
+	/**
+		`:active` (`Properties.active`).
+	**/
 	var Active = 32;
+	/**
+		`:disabled` (`Properties.disabled`).
+	**/
 	var Disabled = 64;
+	/**
+		`:focus` (`Properties.focus`).
+	**/
 	var Focus = 128;
+	/**
+		`:not-important`: lowers the priority of the rule below the rules without it.
+	**/
 	var NotImportant = 256;
 
 	// set for some flags requiring children checks
+	/**
+		Set with the pseudo classes depending on the position among the parent's children.
+	**/
 	var NeedChildren = 512;
 
 	inline function new(v:Int) {
 		this = v;
 	}
 
+	/**
+		Returns the flags as an integer.
+	**/
 	public inline function toInt() return this;
+	/**
+		Tells if the flag is set.
+	**/
 	public inline function has( c : PseudoClass ) return this & c.toInt() != 0;
 
 	@:op(a | b) inline function or( v : PseudoClass ) : PseudoClass {
@@ -59,22 +182,64 @@ enum abstract PseudoClass(Int) {
 
 }
 
+/**
+	The relation between a selector and its parent selector.
+**/
 enum abstract CssRelation(Int) {
+	/**
+		A descendant (`a b`).
+	**/
 	var None = 0;
+	/**
+		A direct child (`a > b`).
+	**/
 	var ImmediateChildren = 1;
+	/**
+		The same object, in a nested rule (`&.b`).
+	**/
 	var SubRule = 2;
 }
 
+/**
+	A CSS selector part: component, class names, id and pseudo classes, with its parent selector.
+**/
 class CssClass {
+	/**
+		The parent selector, or `null`.
+	**/
 	public var parent : Null<CssClass>;
+	/**
+		The component, or `null` for any.
+	**/
 	public var component : Null<Component<Dynamic,Dynamic>>;
+	/**
+		The id (`#id`), or undefined.
+	**/
 	public var id : Identifier;
+	/**
+		The class (`.name`), or `null`.
+	**/
 	public var className : Null<Identifier>;
+	/**
+		The other classes, or `null`.
+	**/
 	public var extraClasses : Null<Array<Identifier>>;
+	/**
+		The pseudo classes.
+	**/
 	public var pseudoClasses : PseudoClass = None;
+	/**
+		The relation with the parent selector.
+	**/
 	public var relation : CssRelation = None;
+	/**
+		Creates an empty selector.
+	**/
 	public function new() {
 	}
+	/**
+		Returns the selector of a nested rule, combined with its parent selector `cl`.
+	**/
 	public function withParent(cl:CssClass) {
 		var c = new CssClass();
 		if( relation == SubRule ) {
@@ -110,6 +275,9 @@ class CssClass {
 		return c;
 	}
 
+	/**
+		Returns the selector in CSS syntax.
+	**/
 	public function toString() {
 		var str = [];
 		if( parent != null )
@@ -145,38 +313,123 @@ class CssClass {
 
 }
 
+/**
+	A transition of a property, declared with the `transition` CSS property.
+**/
 typedef Transition = {
+	/**
+		The property.
+	**/
 	var p : Property;
+	/**
+		The duration, in seconds.
+	**/
 	var time : Float;
+	/**
+		The easing curve.
+	**/
 	var curve : Curve;
 }
 
+/**
+	A parsed style sheet.
+**/
 typedef CssSheet = Array<CssSheetElement>;
 
-typedef CssRule = { p : Property, value : CssValue, pmin : Int, vmin : Int, pmax : Int, file: String };
+/**
+	A property set by a CSS rule, with its position in the source.
+**/
+typedef CssRule = {
+	/**
+		The property.
+	**/
+	var p : Property;
+	/**
+		The value.
+	**/
+	var value : CssValue;
+	/**
+		The start position of the property name.
+	**/
+	var pmin : Int;
+	/**
+		The start position of the value.
+	**/
+	var vmin : Int;
+	/**
+		The end position of the value.
+	**/
+	var pmax : Int;
+	/**
+		The CSS file, or `null`.
+	**/
+	var file : String;
+};
 
+/**
+	A CSS rule: its selectors, properties, transitions and nested rules.
+**/
 typedef CssSheetElement = {
+	/**
+		The selectors (separated by commas).
+	**/
 	var classes : Array<CssClass>;
+	/**
+		The properties.
+	**/
 	var style : Array<CssRule>;
+	/**
+		The transitions.
+	**/
 	var ?transitions : Array<Transition>;
+	/**
+		The nested rules, when not expanded (see `CssParser.expandSubRules`).
+	**/
 	var ?subRules : CssSheet;
  }
 
 
+/**
+	An easing curve: linear.
+**/
 class Curve {
+	/**
+		Creates the curve.
+	**/
 	public function new() {
 	}
+	/**
+		Returns the progress of the value at the time `v` (from `0` to `1`).
+	**/
 	public function interpolate( v : Float ) : Float {
 		return v;
 	}
 }
 
+/**
+	A cubic bezier easing curve, like CSS `cubic-bezier(c1x, c1y, c2x, c2y)`.
+**/
 class BezierCurve extends Curve {
+	/**
+		The X of the first control point.
+	**/
 	public var c1x : Float;
+	/**
+		The Y of the first control point.
+	**/
 	public var c1y : Float;
+	/**
+		The X of the second control point.
+	**/
 	public var c2x : Float;
+	/**
+		The Y of the second control point.
+	**/
 	public var c2y : Float;
 
+	/**
+		Creates the curve from its control points.
+	**/
 	public function new(a:Float,b:Float,c:Float,d:Float) {
 		super();
 		this.c1x = a;
@@ -213,6 +466,9 @@ class BezierCurve extends Curve {
 
 }
 
+/**
+	Parses CSS style sheets and values, with the DomKit extensions: nested rules (`&`, `>`), variables (`@name : value;`), mixins (`.name(args) { }` used as `.name(values);`), arithmetic, and `//` comments.
+**/
 class CssParser {
 
 	var css : String;
@@ -230,13 +486,37 @@ class CssParser {
 	var prevToken3 : Int;
 	var firstClassPos : Int;
 	var warnedComponents : Map<String,Bool>;
+	/**
+		The warnings of the last parsing or `check`.
+	**/
 	public var warnings : Array<{ pmin : Int, pmax : Int, msg : String }>;
+	/**
+		Allows nested rules.
+	**/
 	public var allowSubRules = true;
+	/**
+		Allows variables declarations (`@name : value;`).
+	**/
 	public var allowVariablesDecl = true;
+	/**
+		Allows mixins.
+	**/
 	public var allowMixins = true;
+	/**
+		Converts the nested rules to rules with full selectors.
+	**/
 	public var expandSubRules = true;
+	/**
+		Allows `//` comments.
+	**/
 	public var allowSingleLineComment = true;
+	/**
+		The variables, by name.
+	**/
 	public var variables : Map<String, CssValue> = [];
+	/**
+		The mixins, by name.
+	**/
 	public var mixins : Map<String, { rules : CssSheetElement, args : Array<String> }> = [];
 	var macros : Map<String, (args:Array<CssValue>,parent:CssSheetElement) -> String> = [];
 
@@ -250,13 +530,22 @@ class CssParser {
 		"ease-in-out" => new BezierCurve(0.42, 0, 0.58, 1.0),
 	];
 
+	/**
+		Creates a parser.
+	**/
 	public function new() {
 	}
 
+	/**
+		Adds a macro, used like a mixin (`.name(args);`): `callb` returns CSS code inserted in the rule.
+	**/
 	public function addMacro(name, callb) {
 		macros.set(name, callb);
 	}
 
+	/**
+		Throws an `Error` at the current position.
+	**/
 	public function error( msg : String ) : Dynamic {
 		throw new Error(msg,tokenStart);
 		return null;
@@ -335,6 +624,9 @@ class CssParser {
 		spacesTokens = false;
 	}
 
+	/**
+		Parses the properties of an inline style (without selector).
+	**/
 	public function parse( css : String, ?file : String ) {
 		this.css = css;
 		reset();
@@ -342,6 +634,9 @@ class CssParser {
 		return parseStyle(null, TEof);
 	}
 
+	/**
+		Parses a CSS value.
+	**/
 	public function parseValue( valueStr : String ) {
 		this.css = valueStr;
 		reset();
@@ -352,6 +647,9 @@ class CssParser {
 		return v;
 	}
 
+	/**
+		Returns the CSS operator.
+	**/
 	public static function opStr(op:CssOp) {
 		return switch( op ) {
 		case OAdd:"+";
@@ -361,6 +659,9 @@ class CssParser {
 		}
 	}
 
+	/**
+		Returns the value with `f` applied to its sub values.
+	**/
 	public static function valueMap( v : CssValue, f : CssValue -> CssValue ) {
 		return switch( v ) {
 		case VIdent(_), VString(_), VUnit(_), VFloat(_), VInt(_), VHex(_), VSlash: v;
@@ -375,6 +676,9 @@ class CssParser {
 		}
 	}
 
+	/**
+		Returns the value in CSS syntax.
+	**/
 	public static function valueStr(v) {
 		return switch( v ) {
 		case VIdent(i): i;
@@ -552,6 +856,9 @@ class CssParser {
 		return elt;
 	}
 
+	/**
+		Parses a style sheet.
+	**/
 	public function parseSheet( css : String, ?file : String ) : CssSheet {
 		this.css = css;
 		reset();
@@ -721,6 +1028,9 @@ class CssParser {
 		return s;
 	}
 
+	/**
+		Parses selectors.
+	**/
 	public function parseClasses( css : String, ?hasParent, ?file : String ) {
 		this.css = css;
 		this.file = file;
@@ -1335,6 +1645,9 @@ class CssParser {
 		return null;
 	}
 
+	/**
+		Checks that the properties of the rules are supported by their components and have valid values: the problems are added to `warnings`.
+	**/
 	public function check( rules : CssParser.CssSheet, components : Array<Component<Dynamic,Dynamic>> ) {
 		inline function error(msg,min,max) {
 			warnings.push({ msg : msg, pmin : min, pmax : max });
@@ -1399,8 +1712,8 @@ class CssParser {
 	}
 
 	/**
-	 * Convert from haxe identifier haxeCasing to css haxe-casing
-	 */
+		Converts a Haxe name to CSS casing: `myButton` and `MyButton` are `my-button`. Fully uppercase names are lower cased, and `_` becomes `-`.
+	**/
 	public static function haxeToCss( name : String ) {
 		// if fully uppercase, keep it this way
 		if( name.toUpperCase() == name )
@@ -1420,6 +1733,9 @@ class CssParser {
 		return out.toString();
 	}
 
+	/**
+		Converts a CSS name to a Haxe class name (`my-button` is `MyButton`), or a field name if `isField` is set (`myButton`).
+	**/
 	public static function cssToHaxe( name : String, isField=false ) {
 		var uname = name;
 		if( !isField )

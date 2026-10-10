@@ -3,21 +3,48 @@ import haxe.macro.Type;
 import haxe.macro.Expr;
 using haxe.macro.Tools;
 
+/**
+	An error of the component macros.
+**/
 class MetaError {
+	/**
+		The message.
+	**/
 	public var message : String;
+	/**
+		The position.
+	**/
 	public var position : Position;
+	/**
+		Creates the error.
+	**/
 	public function new(msg,pos) {
 		this.message = msg;
 		this.position = pos;
 	}
 }
 
+/**
+	How the value of a `@:p` property is parsed.
+**/
 enum ParserMode {
+	/**
+		`@:p(none)` or default: `none` is `null` for a nullable type.
+	**/
 	PNone;
+	/**
+		`@:p(auto)`: `auto` is `null` for a nullable type.
+	**/
 	PAuto;
+	/**
+		`@:p(name)`: the `parse<Name>` method of the parser.
+	**/
 	PCustom;
 }
 
+/**
+	The component of a `domkit.Object` class at compile time: reads its `@:p` properties and constructor, and generates its runtime `Component`.
+**/
 class MetaComponent extends Component<Dynamic,Dynamic> {
 
 	#if macro

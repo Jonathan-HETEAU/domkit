@@ -2,62 +2,222 @@ package domkit;
 
 using StringTools;
 
+/**
+	The states of the markup parser.
+**/
 enum abstract MToken(Int) {
+	/**
+		Skipping spaces.
+	**/
 	var IGNORE_SPACES;
+	/**
+		Before a node or text.
+	**/
 	var BEGIN;
+	/**
+		After `<`.
+	**/
 	var BEGIN_NODE;
+	/**
+		After `$` in a text.
+	**/
 	var BEGIN_CODE;
+	/**
+		In a `$ident` code.
+	**/
 	var CODE_IDENT;
+	/**
+		In a `${ code }` block.
+	**/
 	var CODE_BLOCK;
+	/**
+		In a node name.
+	**/
 	var TAG_NAME;
+	/**
+		In a node, between its attributes.
+	**/
 	var BODY;
+	/**
+		In an attribute name.
+	**/
 	var ATTRIB_NAME;
+	/**
+		Expecting `=` after an attribute name.
+	**/
 	var EQUALS;
+	/**
+		Before an attribute value.
+	**/
 	var ATTVAL_BEGIN;
+	/**
+		In a quoted attribute value.
+	**/
 	var ATTRIB_VAL;
+	/**
+		In an attribute value code (`attr={code}`).
+	**/
 	var ATTRIB_VAL_CODE;
+	/**
+		In the children of a node.
+	**/
 	var CHILDS;
+	/**
+		In a closing node.
+	**/
 	var CLOSE;
+	/**
+		Expecting `>` after `/`.
+	**/
 	var WAIT_END;
+	/**
+		Expecting `>` at the end of a closing node.
+	**/
 	var WAIT_END_RET;
+	/**
+		In a text.
+	**/
 	var PCDATA;
+	/**
+		In a `<?` header.
+	**/
 	var HEADER;
+	/**
+		In a `<!-- -->` comment.
+	**/
 	var COMMENT;
+	/**
+		In a `<!DOCTYPE>`.
+	**/
 	var DOCTYPE;
+	/**
+		In a CDATA section.
+	**/
 	var CDATA;
+	/**
+		In an `&entity;`.
+	**/
 	var ESCAPE;
+	/**
+		In the arguments of a node (`<node(args)>`).
+	**/
 	var ARGS;
+	/**
+		In a macro name (`@name`).
+	**/
 	var MACRO_ID;
+	/**
+		In a node condition (`<node if(cond)>`).
+	**/
 	var IF_COND;
+	/**
+		In the parent component name of a definition (`<name:parent>`).
+	**/
 	var PARENT_NAME;
+	/**
+		In the arguments of the parent component.
+	**/
 	var PARENT_ARGS;
 }
 
+/**
+	Haxe code in the markup: an expression in macros, the source code otherwise.
+**/
 typedef CodeExpr = #if macro haxe.macro.Expr #else String #end;
 
+/**
+	The kind of a markup node.
+**/
 enum MarkupKind {
+	/**
+		A component node (`<name>`), or the root of the document (`null` name).
+	**/
 	Node( name : String );
+	/**
+		A text.
+	**/
 	Text( text : String );
+	/**
+		Haxe code (`$ident` or `${ code }`), creating children.
+	**/
 	CodeBlock( v : String );
+	/**
+		A macro call (`@name(args)`), expanded by `domkit.Macros.processMacro`.
+	**/
 	Macro( id : String );
+	/**
+		A loop (`for( x in a ) <node/>`, or with `{ }` for several children).
+	**/
 	For( cond : CodeExpr );
 }
 
+/**
+	The value of an attribute or argument.
+**/
 enum AttributeValue {
+	/**
+		A string, parsed as CSS (`attr="value"`).
+	**/
 	RawValue( v : String );
+	/**
+		Haxe code (`attr={code}`, or `"$code"`).
+	**/
 	Code( v : CodeExpr );
 }
 
-typedef Argument = { value : AttributeValue, pmin : Int, pmax : Int };
-
-typedef Markup = {
-	var kind : MarkupKind;
+/**
+	A node argument (`<node(arg1, arg2)>`), passed to the component constructor.
+**/
+typedef Argument = {
+	/**
+		The value.
+	**/
+	var value : AttributeValue;
+	/**
+		The start position.
+	**/
 	var pmin : Int;
+	/**
+		The end position.
+	**/
 	var pmax : Int;
+};
+
+/**
+	A node of the markup tree.
+**/
+typedef Markup = {
+	/**
+		The kind of node.
+	**/
+	var kind : MarkupKind;
+	/**
+		The start position in the source.
+	**/
+	var pmin : Int;
+	/**
+		The end position in the source.
+	**/
+	var pmax : Int;
+	/**
+		The arguments (`<node(args)>`).
+	**/
 	var ?arguments : Array<Argument>;
+	/**
+		The attributes.
+	**/
 	var ?attributes : Array<{ name : String, value : AttributeValue, pmin : Int, vmin : Int, pmax : Int }>;
+	/**
+		The children.
+	**/
 	var ?children : Array<Markup>;
+	/**
+		The condition (`<node if(cond)>`): the node is created only if it is true.
+	**/
 	var ?condition : { cond : CodeExpr, pmin : Int, pmax : Int };
+	/**
+		The parent component of a component definition (`<name:parent(args)>`).
+	**/
 	var ?parent : { name : String, pmin : Int, pmax : Int, arguments : Array<Argument> };
 }
 
@@ -67,6 +227,9 @@ private typedef MarkupLoop = {
 	var prevLoop : MarkupLoop;
 }
 
+/**
+	Parses the XML-like markup of the components (`static var SRC = <comp>...</comp>`).
+**/
 class MarkupParser {
 
 	static var escapes = {
@@ -82,11 +245,20 @@ class MarkupParser {
 	var fileName : String;
 	var filePos : Int;
 
+	/**
+		Accepts the code blocks that are not loops as raw text, instead of failing.
+	**/
 	public var allowRawText : Bool = false;
 
+	/**
+		Creates a parser.
+	**/
 	public function new() {
 	}
 
+	/**
+		Parses the markup and returns its root, whose children are the top nodes. `filePos` is added to the positions of the nodes and errors.
+	**/
 	public function parse(str:String,fileName:String,filePos:Int) {
 		var p : Markup = {
 			kind : Node(null),
@@ -764,6 +936,9 @@ class MarkupParser {
 		#end
 	}
 
+	/**
+		Returns the markup source of a node.
+	**/
 	public static function markupToString( m : Markup ) {
 		var buf = new StringBuf();
 		markupToStringRec(m, buf, "");
