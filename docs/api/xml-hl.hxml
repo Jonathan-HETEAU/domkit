@@ -1,0 +1,9 @@
+-cp .
+-lib hscript
+-lib heaps
+-D hscriptPos
+--macro include('domkit',true,['domkit.Macros'])
+-D doc-gen
+--no-output
+-hl domkit.hl
+-xml docs/api/domkit_hl.xml
