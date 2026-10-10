@@ -16,7 +16,9 @@ echo "$CONFLICTS" | grep -q '^0 conflicts$' || { echo "$CONFLICTS"; echo 'Make t
 # public API without documentation, as dox sees it (informative)
 python3 tools/docgen/xml-undocumented.py | tail -1
 IN=$(mktemp -d)
-cp docs/api/domkit_*.xml $IN
+# dox cannot merge types whose kind differs per platform: keep the js one
+# (FastBytes is an abstract over hl.Bytes on HashLink, haxe.io.Bytes elsewhere).
+python3 tools/docgen/merge-fix.py docs/api $IN domkit.FastBytes >/dev/null
 rm -rf docs/api/html
 # dox caches by XML hash inside its output dir: always start from an empty one.
 (cd /opt/haxesrc/dox && hl run.hl -i $IN -o $ROOT/docs/api/html --title "DomKit API" -in "^domkit(\.|$)" \
