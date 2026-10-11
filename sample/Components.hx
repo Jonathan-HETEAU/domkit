@@ -7,6 +7,7 @@ class BaseComponent implements domkit.Model<BaseComponent> implements domkit.Obj
 	public var dom : domkit.Properties<BaseComponent>;
 	public var parent : BaseComponent;
 	public function getChildren() return children;
+	public function getChildRefPosition( first : Bool ) return first ? 0 : children.length - 1;
 
 	// constructors should always take the parent component as optional last argument
 	public function new(?parent:BaseComponent) {

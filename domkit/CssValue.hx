@@ -118,8 +118,8 @@ class HSL {
 		var g = ((color >> 8) & 0xFF) / 255;
 		var b = (color & 0xFF) / 255;
 		alpha = (color >>> 24) / 255;
-	    var max = hxd.Math.max(hxd.Math.max(r, g), b);
-		var min = hxd.Math.min(hxd.Math.min(r, g), b);
+	    var max = Math.max(Math.max(r, g), b);
+		var min = Math.min(Math.min(r, g), b);
 		var h, s, l = (max + min) / 2.0;
 
 		if(max == min)
